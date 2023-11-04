@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 import requests
 import pandas as pd
 from datetime import datetime
-
+import json
 
 app = web.Application(router=UrlDispatcherEx())
 
@@ -20,7 +20,7 @@ cors = aiohttp_cors.setup(app, defaults={
 })
 
 
-def show_chart():
+async def handerData(request):
     url = "https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=30"
 
     payload = {}
@@ -34,23 +34,27 @@ def show_chart():
     data_time = []
     for x in data['prices']:
         data_price.append(x[1])
-        data_time.append(datetime.fromtimestamp(int(x[0]/1000)))
+        data_time.append(int(x[0]/1000))
         
     df = {
         "Date":data_time,
         "Price":data_price
     }
     fig = go.Figure([go.Scatter(x=df['Date'], y=df['Price'])])
-    fig.show()
+    # fig.show()
+    return web.Response(text=json.dumps(df)) 
 
 async def handle(request):
     name = request.match_info.get('name', "Anonymous")
     text = "Hello, " + name
-    return web.Response(text=text)
+
+    return web.Response(text=json.dumps({
+        "test":123,
+    })) 
 
 
 app.router.add_get('/test', handle)
-app.router.add_post('/data', show_chart)
+app.router.add_get('/data', handerData)
 
 for route in list(app.router.routes()):
     cors.add(route)
